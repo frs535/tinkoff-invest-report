@@ -1,33 +1,77 @@
-import {useGetPortfolioQuery, useGetBondQuery, useGetBondsQuery, useGetBonds2Query} from "../../state/api";
-import {Box, Checkbox, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography} from "@mui/material";
+import {
+    useGetBondsQuery,
+    useGetBondCouponsQuery
+} from "../../state/api";
+import {
+    Avatar,
+    Box,
+    Checkbox,
+    Table,
+    TableBody,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography
+} from "@mui/material";
 import * as React from "react";
 import {useEffect, useState} from "react";
+import {AddMonth, BeginOfMonth, DiffDate, EndOfMonth, ToFloat, ToMoneyFormat, ToPercent} from "../../helpers/Helper";
 
-function ToFloat(item, currency){
+function GetInvestPercent(figi, coupons, cost){
 
-    if (!item && currency)
-        return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUR' }).format(0,)
+    const current = coupons.filter((coupon)=> coupon.figi ===figi)
+    if (current.length===0) return 0
 
-    if (!item && !currency) return 0;
+    const startDate = BeginOfMonth(new Date())
 
-    const units = parseFloat(item.units?.replace(",", "."));
-    const nano = item.nano? Math.round(item.nano/10000000) / 100 : 0;
+    const endDate = AddMonth(startDate, 12)
 
-    const result = units + nano;
+    const annualDays    = DiffDate(startDate, endDate)
 
-    if (currency)
-        return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUR' }).format(result,);
+    let maxDate = new Date();
+    current.forEach((row)=>{
+        const currentDate = new Date(row.couponDate)
+        if (currentDate > maxDate){
+            maxDate = currentDate
+        }
+        else{
+            console.log(maxDate)
+            console.log(currentDate)
+        }
 
-    return result;
+    })
+    // let maxDate = current.reduce((result, row) => {
+    //     return result === 0? (result > new Date(row.couponDate)? result: new Date(row.couponDate)) : new Date(row.couponDate)
+    // }, 0)
+    maxDate = EndOfMonth(maxDate)
+
+    const nkdDays = DiffDate(startDate, maxDate)
+
+    const amount = current.reduce((result, value) => {
+        return result + value.payOneBond;
+    },0);
+
+    const result = annualDays * amount / nkdDays / cost
+
+    return ToPercent(result)
 }
 
-export const Bonds = ({accountId, currency}) => {
+export const Bonds = ({bonds}) => {
 
     const [numberOfMonths, setNumberOfMonths] = useState(12);
 
-    const { data: bonds=[], error, isLoading, isFetching, isError } = useGetBondsQuery({accountId, currency})
+    const { data: bondsInfo=[], error, isLoading, isFetching, isError } = useGetBondsQuery({bonds: bonds})
 
-    if (isLoading || isFetching)
+    const { data: coupons=[], error: errorCoupons, isLoading: isLoadingCoupons} = useGetBondCouponsQuery({bonds: bondsInfo, numberOfMonths},
+        {
+            skip: bondsInfo.length ===0,
+    })
+
+    if (bonds.length === 0) return ""
+
+    if (isLoading || isLoadingCoupons)
         return (<div>Загрузка</div>)
 
     if (isError)
@@ -56,13 +100,16 @@ export const Bonds = ({accountId, currency}) => {
             <Table size="small">
                 <TableHead>
                     <TableRow>
+                        <TableCell></TableCell>
                         <TableCell>Наименование</TableCell>
                         <TableCell>ISIN</TableCell>
                         <TableCell>Количество</TableCell>
                         <TableCell>Цена </TableCell>
+                        <TableCell>Сумма</TableCell>
                         <TableCell>Текущая цена</TableCell>
                         <TableCell>Изменение</TableCell>
                         <TableCell>НКД</TableCell>
+                        <TableCell>Инвест процент</TableCell>
                         <TableCell align="right">Заблокирована</TableCell>
                         {
                             numberOfMonths > 0 ? new Array(numberOfMonths)
@@ -70,8 +117,8 @@ export const Bonds = ({accountId, currency}) => {
                                     .map((number, index)=>{
                                         const currentDate = new Date()
                                         const date = new Date(currentDate)
-                                        date.setMonth(date.getMonth() + 1 + index)
-                                        return <TableCell>{`${date.getMonth()==0 ? 12:date.getMonth()}/${date.getFullYear()}`}</TableCell>
+                                        date.setMonth(date.getMonth() + index)
+                                        return <TableCell>{`${date.getMonth() + 1}/${date.getFullYear()}`}</TableCell>
                                     })
                             : ""
                         }
@@ -79,30 +126,82 @@ export const Bonds = ({accountId, currency}) => {
                 </TableHead>
                 <TableBody>
                     {
-                        bonds.map(row=>(
+                        bondsInfo?.map((row)=>(
                             <TableRow key={row.figi}>
+                                <TableCell>
+                                    <Avatar src={`https://invest-brands.cdn-tinkoff.ru/${row.info.brand.logoName.replace('.png', 'x160.png')}`}/>
+                                </TableCell>
                                 <TableCell>{row.info.name}</TableCell>
                                 <TableCell>{row.info.isin}</TableCell>
-                                <TableCell>{ToFloat(row.bond.quantity) }</TableCell>
-                                <TableCell>{ToFloat(row.bond.averagePositionPrice, true)}</TableCell>
-                                <TableCell>{ToFloat(row.bond.currentPrice, true)}</TableCell>
-                                <TableCell>{ToFloat(row.bond.expectedYieldFifo, true)}</TableCell>
-                                <TableCell>{ToFloat(row.bond.currentNkd, true)}</TableCell>
+                                <TableCell>{row.quantity}</TableCell>
+                                <TableCell>{ToMoneyFormat(row.averagePositionPrice, row.info.currency)}</TableCell>
+                                <TableCell>{ToMoneyFormat(row.quantity * row.averagePositionPrice, row.info.currency)}</TableCell>
+                                <TableCell>{ToMoneyFormat(row.currentPrice, row.info.currency)}</TableCell>
+                                <TableCell>{ToMoneyFormat(row.expectedYieldFifo, row.info.currency)}</TableCell>
+                                <TableCell>{ToMoneyFormat(row.currentNkd, row.info.currency)}</TableCell>
+                                <TableCell>{GetInvestPercent(row.figi, coupons, row.averagePositionPrice)}</TableCell>
                                 <TableCell>{<Checkbox disabled checked={row.bond.blocked} />}</TableCell>
                                 {
                                     numberOfMonths > 0 ? new Array(numberOfMonths)
                                             .fill(0)
                                             .map((number, index)=>{
+
                                                 const currentDate = new Date()
                                                 const date = new Date(currentDate)
-                                                date.setMonth(date.getMonth() + 1 + index)
-                                                return <TableCell>{1 + index}</TableCell>
+                                                date.setMonth(date.getMonth()  + index)
+                                                const month = date.getMonth() + 1
+                                                const year = date.getFullYear()
+
+                                                const result = coupons.find((coupon)=>
+                                                    coupon.figi == row.bond.figi && coupon.month==month && coupon.year ==year)
+
+                                                if (result)
+                                                {
+                                                    const amount = row.quantity * result.payOneBond
+                                                    return <TableCell>{ToMoneyFormat(amount, row.info.currency)}</TableCell>
+                                                }
+                                                return <TableCell></TableCell>
                                             })
                                         : ""
                                 }
                             </TableRow>
                         ))}
                 </TableBody>
+                <TableFooter>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell>Итого:</TableCell>
+                    {
+                        numberOfMonths > 0 ? new Array(numberOfMonths)
+                                .fill(0)
+                                .map((number, index)=>{
+
+                                    const currentDate = new Date()
+                                    const date = new Date(currentDate)
+                                    date.setMonth(date.getMonth()  + index)
+                                    const month = date.getMonth() + 1
+                                    const year = date.getFullYear()
+
+                                    const result = coupons.filter((coupon)=> coupon.month==month && coupon.year ==year)
+                                    let amount = 0;
+                                    result.forEach((item)=>{
+                                        const bond = bondsInfo.find((bond)=> bond.bond.figi == item.figi)
+                                        amount = amount + bond.quantity * item.payOneBond;
+                                    })
+
+                                    return <TableCell>{ToMoneyFormat(amount)}</TableCell>
+                                })
+                            : ""
+                    }
+                </TableFooter>
             </Table>
         </Box>
     )

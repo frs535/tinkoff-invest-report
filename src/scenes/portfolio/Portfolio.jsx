@@ -7,14 +7,16 @@ import {Title} from "@mui/icons-material";
 import {Shares} from "../shares/Shares";
 import {Bonds} from "../bounds/Bonds";
 import {useDispatch} from "react-redux";
-import {setAccounts} from "../../state";
+import {setAccount, setAccounts} from "../../state";
+import {Etfs} from "../etf/Etfs";
 
 export const Portfolio = ({accounts}) => {
 
     const dispatch = useDispatch();
-    const [accountId, setAccountId] = useState()
+    const [currentAccountId, setCurrentAccountId] = useState()
+    const [currentPortfolio, setCurrentPortfolio] = useState()
 
-    const { data: allPortfolio=[], error, isLoading, isFetching, isError } = useGetAllPortfolioQuery(accounts)
+    const { data: allPortfolio=[], error, isLoading = false, isFetching, isError } = useGetAllPortfolioQuery(accounts)
 
     if(isLoading)
         return (<div>Загрузка</div>)
@@ -23,13 +25,17 @@ export const Portfolio = ({accounts}) => {
 
     return (
         <Box>
-            <Accounts onChange={(id)=>setAccountId(id)}></Accounts>
-
-
+            <Accounts onChange={(id)=>{
+                dispatch(setAccount(id))
+                setCurrentAccountId(id)
+                setCurrentPortfolio(allPortfolio.find((portfolio)=> portfolio.accountId === id))
+            }}></Accounts>
 
             {/*<Typography sx={{ml:2}} variant="h5">{`Итого по счету: ${ToFloat(data.totalAmountPortfolio)}`}</Typography>*/}
-            {accountId? <Shares accountId={accountId} currency="RUB"/> : ""}
-            {accountId? <Bonds accountId={accountId} currency="RUB"/> : ""}
+
+            {currentAccountId? <Shares shares={currentPortfolio.positions.filter((postition)=> postition.instrumentType === 'share')}/> : ""}
+            {currentPortfolio? <Bonds bonds={currentPortfolio.positions.filter((postition)=> postition.instrumentType === 'bond')}/> : ""}
+            {currentAccountId? <Etfs etfs={currentPortfolio.positions.filter((postition)=> postition.instrumentType === 'etf')}/> : ""}
         </Box>
     )
 }

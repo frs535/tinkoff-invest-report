@@ -1,4 +1,6 @@
 import {createApi, fetchBaseQuery, retry} from "@reduxjs/toolkit/query/react";
+import {AddMonth, BeginOfMonth, EndOfMonth, ToFloat} from "../helpers/Helper";
+import {Build} from "@mui/icons-material";
 const baseUrl = `https://invest-public-api.tinkoff.ru/rest/`;
 
 const baseQuery = retry(fetchBaseQuery({
@@ -22,7 +24,8 @@ export const clientApi = createApi({
         'Portfolio',
         'Bond',
         'Bonds',
-        'Coupon'
+        'Coupon',
+        'Share'
     ],
     endpoints: (build) => ({
 
@@ -93,19 +96,11 @@ export const clientApi = createApi({
         }),
 
         getBonds: build.query({
-            queryFn : async (data, _queryapi, _extraoptions, fetchwithbq) =>{
+            queryFn : async (arg, _queryapi, _extraoptions, fetchwithbq) =>{
 
-                const portfolio = await fetchwithbq({
-                    url: 'tinkoff.public.invest.api.contract.v1.OperationsService/GetPortfolio',
-                    method: 'POST',
-                    body: JSON.stringify({
-                        "accountId": `${data.accountId}`,
-                        "currency": `${data.currency}`
-                    }),
-                }, _queryapi, _extraoptions);
+                if (arg.bonds.length === 0) return {data: []}
 
-                const bonds = portfolio.data.positions.filter(row => row.instrumentType === 'bond');
-                const infoBond = bonds.map(bond  => {
+                const infoBond = arg.bonds.map(bond  => {
                     return fetchwithbq({
                         url: 'tinkoff.public.invest.api.contract.v1.InstrumentsService/BondBy',
                         body: {idType: '1', id: bond.figi},
@@ -116,10 +111,22 @@ export const clientApi = createApi({
                 const infoBondResult = await Promise.all(infoBond);
 
                 return {
-                    data: bonds.map((bond)=>{
+                    data: arg.bonds.map((bond)=>{
                         return {
                             bond,
-                            info: infoBondResult.find((p)=> p.figi == bond.figi)
+                            info: infoBondResult.find((p)=> p.figi == bond.figi),
+                            figi: bond.figi,
+                            quantity: ToFloat(bond.quantity),
+                            averagePositionPrice: ToFloat(bond.averagePositionPrice),
+                            expectedYield: ToFloat(bond.expectedYield),
+                            currentNkd: ToFloat(bond.currentNkd),
+                            averagePositionPricePt: ToFloat(bond.averagePositionPricePt),
+                            currentPrice: ToFloat(bond.currentPrice),
+                            averagePositionPriceFifo: ToFloat(bond.averagePositionPriceFifo),
+                            quantityLots: ToFloat(bond.quantityLots),
+                            blockedLots: ToFloat(bond.blockedLots),
+                            varMargin: ToFloat(bond.varMargin),
+                            expectedYieldFifo: ToFloat(bond.expectedYieldFifo)
                         }
                     })};
             },
@@ -131,6 +138,204 @@ export const clientApi = createApi({
                     ]
                     : [{ type: 'Bonds', id: 'LIST' }],
         }),
+
+        getBondCoupons: build.query({
+            queryFn: async (data, _queryapi, _extraoptions, fetchwithbq)=>{
+
+                const numberOfMonths = data.numberOfMonths;
+
+                const startDate = BeginOfMonth(new Date())
+
+                const endDate = AddMonth(startDate, numberOfMonths)
+
+                const couponsPromise = data.bonds.map((row) => {
+                    return fetchwithbq({
+                        url: 'tinkoff.public.invest.api.contract.v1.InstrumentsService/GetBondCoupons',
+                        body: {
+                            figi: row.bond.figi,
+                            from: startDate.toJSON(),
+                            to: endDate.toJSON()
+                        },
+                        method: 'POST'
+                    }, _queryapi, _extraoptions)
+                        .then((row)=> row.data.events.map((row)=>{
+
+                            const couponDate = new Date(row.couponDate)
+                            return {
+                                figi: row.figi,
+                                couponDate: row.couponDate,
+                                month: couponDate.getMonth() + 1,
+                                year: couponDate.getFullYear(),
+                                couponNumber: row.couponNumber,
+                                couponPeriod: row.couponPeriod,
+                                payOneBond: ToFloat(row.payOneBond),
+                                key: `${row.figi}-${row.couponDate}`
+                            }
+                        }));
+                });
+
+                const coupons = await Promise.all(couponsPromise);
+
+                let result = []
+                coupons.forEach((item) => {
+                    if (item.length>0) result = result.concat(item)
+                });
+
+                return { data: result}
+            },
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ key }) => ({ type: 'Coupon', id: key })),
+                        { type: 'Coupon', id: 'LIST' },
+                    ]
+                    : [{ type: 'Coupon', id: 'LIST' }],
+        }),
+
+        getShares: build.query({
+            queryFn: async (args, _queryapi, _extraoptions, _fetchwithbq) =>{
+
+                const sharesPromises = args.shares.map((share)=>{
+                    return _fetchwithbq({
+                        url: 'tinkoff.public.invest.api.contract.v1.InstrumentsService/ShareBy',
+                        body: {idType: '1', id: share.figi},
+                        method: 'POST'
+                    }, _queryapi, _extraoptions).then((share)=>share.data.instrument)
+                })
+
+                const shares = await Promise.all(sharesPromises)
+
+                return {
+                    data: args.shares.map((share)=>{
+
+                        const info =shares.find((row)=> row.figi === share.figi)
+                        const quantity = ToFloat(share.quantity)
+                        const averagePositionPrice = ToFloat(share.averagePositionPrice)
+                        return {
+                            share,
+                            info: info,
+                            figi: share.figi,
+                            image: `https://invest-brands.cdn-tinkoff.ru/${info?.brand.logoName.replace('.png', 'x160.png')}`,
+                            name: info.name,
+                            isin: info.isin,
+                            quantity: quantity,
+                            averagePositionPrice: averagePositionPrice,
+                            amount: quantity * averagePositionPrice,
+                            expectedYield: ToFloat(share.expectedYield),
+                            currentNkd: ToFloat(share.currentNkd),
+                            averagePositionPricePt: ToFloat(share.averagePositionPricePt),
+                            currentPrice: ToFloat(share.currentPrice),
+                            averagePositionPriceFifo: ToFloat(share.averagePositionPriceFifo),
+                            quantityLots: ToFloat(share.quantityLots),
+                            blockedLots: ToFloat(share.blockedLots),
+                            varMargin: ToFloat(share.varMargin),
+                            expectedYieldFifo: ToFloat(share.expectedYieldFifo)
+                        }
+                    })
+                }
+            },
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ share }) => ({ type: 'Share', id: share.figi })),
+                        { type: 'Share', id: 'LIST' },
+                    ]
+                    : [{ type: 'Share', id: 'LIST' }],
+        }),
+
+        getDividends: build.query({
+            queryFn: async (args, _queryapi, _extraoptions, _fetchwithbq) =>{
+
+                if (args.positions.length ===0) return {data: []}
+
+                const startDate = BeginOfMonth(new Date());
+                const endDate = AddMonth(startDate, 12)
+
+                const dividends = []
+                for (let i = 0; i < args.positions.length; i++) {
+
+                    let share = args.positions[i]
+                    const result = await _fetchwithbq({
+                                url: 'tinkoff.public.invest.api.contract.v1.InstrumentsService/GetDividends',
+                                body: {
+                                    figi: share.figi,
+                                    from: startDate.toJSON(),
+                                    to: endDate.toJSON()
+                                },
+                                method: 'POST'
+                            }, _queryapi, _extraoptions).then((row)=> row.data.dividends)
+
+                    result.map((row)=> {
+                        dividends.push({
+                            figi: share.figi,
+                            dividend: row,
+                            dividendNet: ToFloat(row.dividendNet),
+                            lastBuyDate: row.lastBuyDate,
+                            paymentDate: row.paymentDate,
+                            key: `${share.figi}-${row.lastBuyDate}`
+                            })
+
+
+                    })
+                }
+                return { data: dividends}
+            },
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ key }) => ({ type: 'Dividend', id: key })),
+                        { type: 'Dividend', id: 'LIST' },
+                    ]
+                    : [{ type: 'Dividend', id: 'LIST' }],
+        }),
+
+        getEtfs: build.query({
+            queryFn: async (args, _queryapi, _extraoptions, _fetchwithbq) =>{
+
+                if (args.etfs.length ===0) return { data: []}
+
+                const infoEtfsPromise = args.etfs.map(etf  => {
+                    return _fetchwithbq({
+                        url: 'tinkoff.public.invest.api.contract.v1.InstrumentsService/EtfBy',
+                        body: {idType: '1', id: etf.figi},
+                        method: 'POST'
+                    }, _queryapi, _extraoptions).then((bond)=> bond.data.instrument);
+                });
+
+                const infoEtfs = await Promise.all(infoEtfsPromise);
+
+                return {
+                    data: args.etfs.map((etf)=>{
+
+                        const info = infoEtfs.find((p)=> p.figi == etf.figi)
+                        const quantity = ToFloat(etf.quantity)
+                        const price = ToFloat(etf.averagePositionPrice)
+
+                        return {
+                            bond: etf,
+                            info: info,
+                            figi: etf.figi,
+                            image: `https://invest-brands.cdn-tinkoff.ru/${info.brand.logoName.replace('.png', 'x160.png')}`,
+                            Name: info.name,
+                            ISIN: info.isin,
+                            Quantity: quantity,
+                            Price: price,
+                            Amount: price * quantity,
+                            CurrentPrice: ToFloat(etf.currentPrice),
+                            Deviation: ToFloat(etf.expectedYield),
+                            Currency: info.currency,
+                        }
+                    })};
+
+            }
+        }),
+        providesTags: (result) =>
+            result
+                ? [
+                    ...result.map(({ figi }) => ({ type: 'Etfs', id: figi })),
+                    { type: 'Etfs', id: 'LIST' },
+                ]
+                : [{ type: 'Etfs', id: 'LIST' }],
     })
 })
 
@@ -140,4 +345,8 @@ export const {
     useGetBondQuery,
     useGetBondsQuery,
     useGetAllPortfolioQuery,
+    useGetBondCouponsQuery,
+    useGetSharesQuery,
+    useGetDividendsQuery,
+    useGetEtfsQuery
 } = clientApi
