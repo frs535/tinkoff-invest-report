@@ -105,7 +105,8 @@ export const Shares = ({shares}) => {
         },
         {
             field: "quantity",
-            headerName: "Количество",
+            headerName: "Кол.",
+            description: 'Количество в портфеле',
             headerAlign: "left",
             align: "left",
             flex: 0.2,
@@ -113,9 +114,10 @@ export const Shares = ({shares}) => {
         {
             field: "averagePositionPrice",
             headerName: "Цена",
+            description: 'Среденяя цена за акцию в портфеле',
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.2,
             renderCell: p => { return ToMoneyFormat(p.row.averagePositionPrice, p.row.currency) },
         },
         {
@@ -123,15 +125,16 @@ export const Shares = ({shares}) => {
             headerName: "Сумма",
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.2,
             renderCell: p => { return ToMoneyFormat(p.row.amount, p.row.currency) },
         },
         {
             field: "currentPrice",
-            headerName: "Текущая цена",
+            headerName: "Тек. цена",
+            description: 'Текущая биржевая цена',
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.2,
             renderCell: p => { return ToMoneyFormat(p.row.currentPrice, p.row.currency) },
         },
         {
@@ -145,9 +148,10 @@ export const Shares = ({shares}) => {
         {
             field: "dividend",
             headerName: "Дивиденд",
+            description: 'Дивиденд на одну акцию',
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.2,
             renderCell: (p) => {
                 return <Box>{
                     p.row.dividend.map((arr)=> {
@@ -158,9 +162,10 @@ export const Shares = ({shares}) => {
         {
             field: "amountDividend",
             headerName: "Девидент, Σ",
+            description: 'Сумма дивидентов на все количество. Без учета налога',
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.2,
             renderCell: (p) => {
                 return <Box>{
                     p.row.amountDividend.map((arr)=> {
@@ -171,6 +176,7 @@ export const Shares = ({shares}) => {
         {
             field: "profitability",
             headerName: "Доходность",
+            description: 'Доходность, в процентах, на среднюю цену покупки',
             headerAlign: "left",
             align: "left",
             flex: 0.2,
@@ -178,9 +184,10 @@ export const Shares = ({shares}) => {
         {
             field: "closure",
             headerName: "Закрытие",
+            description: 'Дата, до которой включительно, необходимо купить акцию что бы получить дивиденд',
             headerAlign: "left",
             align: "left",
-            flex: 0.25,
+            flex: 0.2,
             renderCell: (p) => {
                 return <Box>{
                     p.row.closure.map((arr)=> {
@@ -191,9 +198,10 @@ export const Shares = ({shares}) => {
         {
             field: "payment",
             headerName: "Выплата",
+            description: 'Плановая выплата дивиденда',
             headerAlign: "left",
             align: "left",
-            flex: 0.25,
+            flex: 0.2,
             renderCell: (p) => {
                 return <Box>{
                     p.row.payment.map((arr)=> {
@@ -204,6 +212,7 @@ export const Shares = ({shares}) => {
         {
             field: "blocked",
             headerName: "Блок",
+            description: 'Указывает заблокирована данная позиция для покупки продажи на бирже',
             headerAlign: "left",
             align: "left",
             flex: 0.1,

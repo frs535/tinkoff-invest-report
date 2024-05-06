@@ -112,21 +112,30 @@ export const clientApi = createApi({
 
                 return {
                     data: arg.bonds.map((bond)=>{
+
+                        const info =infoBondResult.find((p)=> p.figi == bond.figi);
+                        const quantity = ToFloat(bond.quantity)
+                        const currentPrice = ToFloat(bond.currentPrice)
+
                         return {
                             bond,
-                            info: infoBondResult.find((p)=> p.figi == bond.figi),
+                            info,
                             figi: bond.figi,
-                            quantity: ToFloat(bond.quantity),
+                            isin: info.isin,
+                            name: info.name,
+                            quantity,
                             averagePositionPrice: ToFloat(bond.averagePositionPrice),
                             expectedYield: ToFloat(bond.expectedYield),
                             currentNkd: ToFloat(bond.currentNkd),
                             averagePositionPricePt: ToFloat(bond.averagePositionPricePt),
-                            currentPrice: ToFloat(bond.currentPrice),
+                            currentPrice,
+                            amount: currentPrice * quantity,
                             averagePositionPriceFifo: ToFloat(bond.averagePositionPriceFifo),
                             quantityLots: ToFloat(bond.quantityLots),
                             blockedLots: ToFloat(bond.blockedLots),
                             varMargin: ToFloat(bond.varMargin),
-                            expectedYieldFifo: ToFloat(bond.expectedYieldFifo)
+                            expectedYieldFifo: ToFloat(bond.expectedYieldFifo),
+                            image: `https://invest-brands.cdn-tinkoff.ru/${info?.brand.logoName.replace('.png', 'x160.png')}`,
                         }
                     })};
             },
