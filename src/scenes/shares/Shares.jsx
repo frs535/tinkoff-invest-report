@@ -1,7 +1,7 @@
 import {useGetDividendsQuery, useGetPortfolioQuery, useGetSharesQuery} from "../../state/api";
 import {Avatar, Box, Checkbox, Table, TableBody, TableCell, TableHead, TableRow, Typography} from "@mui/material";
 import * as React from "react";
-import {ToFloat, ToLocalDate, ToMoneyFormat} from "../../helpers/Helper";
+import {ToFloat, ToLocalDate, ToMoneyFormat, ToPercent} from "../../helpers/Helper";
 import {DataGrid} from "@mui/x-data-grid";
 
 export const Shares = ({shares}) => {
@@ -41,6 +41,14 @@ export const Shares = ({shares}) => {
         const payment = shareDividends.map((divs)=> {
             return ToLocalDate(new Date(divs.paymentDate))})
 
+        let profitability = shareDividends.reduce(
+            (acc, curr) => acc + curr.dividendNet,
+            0)
+
+        if(profitability> 0 && row.averagePositionPrice > 0){
+            profitability = profitability / row.averagePositionPrice
+        }
+
         return{
             figi: row.figi,
             image: row.image,
@@ -62,6 +70,7 @@ export const Shares = ({shares}) => {
             amountDividend,
             closure,
             payment,
+            profitability: profitability >0 ? ToPercent(profitability): "",
             blocked: row.share.blocked,
             currency: row.info.currency,
         }
@@ -85,21 +94,21 @@ export const Shares = ({shares}) => {
             headerName: "ISIN",
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.25,
         },
         {
             field: "name",
             headerName: "Наименование",
             headerAlign: "left",
             align: "left",
-            flex: 0.5,
+            flex: 0.4,
         },
         {
             field: "quantity",
             headerName: "Количество",
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.2,
         },
         {
             field: "averagePositionPrice",
@@ -135,7 +144,7 @@ export const Shares = ({shares}) => {
         },
         {
             field: "dividend",
-            headerName: "Девидент",
+            headerName: "Дивиденд",
             headerAlign: "left",
             align: "left",
             flex: 0.3,
@@ -148,7 +157,7 @@ export const Shares = ({shares}) => {
         },
         {
             field: "amountDividend",
-            headerName: "Девидент (сумма)",
+            headerName: "Девидент, Σ",
             headerAlign: "left",
             align: "left",
             flex: 0.3,
@@ -160,11 +169,18 @@ export const Shares = ({shares}) => {
             }
         },
         {
+            field: "profitability",
+            headerName: "Доходность",
+            headerAlign: "left",
+            align: "left",
+            flex: 0.2,
+        },
+        {
             field: "closure",
             headerName: "Закрытие",
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.25,
             renderCell: (p) => {
                 return <Box>{
                     p.row.closure.map((arr)=> {
@@ -177,7 +193,7 @@ export const Shares = ({shares}) => {
             headerName: "Выплата",
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.25,
             renderCell: (p) => {
                 return <Box>{
                     p.row.payment.map((arr)=> {
@@ -187,10 +203,10 @@ export const Shares = ({shares}) => {
         },
         {
             field: "blocked",
-            headerName: "Заблокирована",
+            headerName: "Блок",
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.1,
             renderCell: (p) => {
                 return <Checkbox disabled checked={p.row.blocked}/>
             }
@@ -209,59 +225,6 @@ export const Shares = ({shares}) => {
                 rows={resultShare}
                 getRowId={(row) => row.figi}
             />
-            {/*<Table size="small">*/}
-            {/*    <TableHead>*/}
-            {/*        <TableRow>*/}
-            {/*            <TableCell></TableCell>*/}
-            {/*            <TableCell>ISIN</TableCell>*/}
-            {/*            <TableCell>Наименование</TableCell>*/}
-            {/*            <TableCell>Количество</TableCell>*/}
-            {/*            <TableCell>Цена</TableCell>*/}
-            {/*            <TableCell>Сумма</TableCell>*/}
-            {/*            <TableCell>Текущая цена</TableCell>*/}
-            {/*            <TableCell>Изменение</TableCell>*/}
-            {/*            <TableCell>Дивидент</TableCell>*/}
-            {/*            <TableCell>Дивидент (сумма)</TableCell>*/}
-            {/*            <TableCell>Закрытие</TableCell>*/}
-            {/*            <TableCell>Выплата</TableCell>*/}
-            {/*            <TableCell align="right">Заблокировано</TableCell>*/}
-            {/*        </TableRow>*/}
-            {/*    </TableHead>*/}
-            {/*    <TableBody>*/}
-            {/*        {data? data.map((row)=> {*/}
-
-            {/*            const shareDividends = dvivdents.filter((divident) => divident.figi === row.figi)*/}
-            {/*                return (*/}
-            {/*                    <TableRow key={row.figi}>*/}
-            {/*                        <TableCell>*/}
-            {/*                            <Avatar*/}
-            {/*                                src={`https://invest-brands.cdn-tinkoff.ru/${row.info.brand.logoName.replace('.png', 'x160.png')}`}/>*/}
-            {/*                        </TableCell>*/}
-            {/*                        <TableCell>{row.figi}</TableCell>*/}
-            {/*                        <TableCell>{row.info.name}</TableCell>*/}
-            {/*                        <TableCell>{row.quantity}</TableCell>*/}
-            {/*                        <TableCell>{ToMoneyFormat(row.averagePositionPrice, row.info.currency)}</TableCell>*/}
-            {/*                        <TableCell>{ToMoneyFormat(row.averagePositionPrice * row.quantity, row.info.currency)}</TableCell>*/}
-            {/*                        <TableCell>{ToMoneyFormat(row.currentPrice, row.info.currency)}</TableCell>*/}
-            {/*                        <TableCell>{ToMoneyFormat(row.expectedYieldFifo, row.info.currency)}</TableCell>*/}
-            {/*                        <TableCell>{shareDividends.map((divs)=> {*/}
-            {/*                                return <div>{ToMoneyFormat(divs.dividendNet, row.info.currency)}</div>})}*/}
-            {/*                        </TableCell>*/}
-            {/*                        <TableCell>{shareDividends.map((divs)=> {*/}
-            {/*                            return <div>{ToMoneyFormat(divs.dividendNet * row.quantity, row.info.currency)}</div>})}*/}
-            {/*                        </TableCell>*/}
-            {/*                        <TableCell>{shareDividends.map((divs)=> {*/}
-            {/*                            return <div>{ToLocalDate(new Date(divs.lastBuyDate))}</div>})}*/}
-            {/*                        </TableCell>*/}
-            {/*                        <TableCell>{shareDividends.map((divs)=> {*/}
-            {/*                            return <div>{ToLocalDate(new Date(divs.paymentDate))}</div>})}*/}
-            {/*                        </TableCell>*/}
-            {/*                        <TableCell>{<Checkbox disabled checked={row.share.blocked}/>}</TableCell>*/}
-            {/*                    </TableRow>*/}
-            {/*                )*/}
-            {/*            }) :""}*/}
-            {/*    </TableBody>*/}
-            {/*</Table>*/}
         </Box>
     )
 }
