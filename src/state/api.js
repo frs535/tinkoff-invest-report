@@ -341,15 +341,40 @@ export const clientApi = createApi({
                         }
                     })};
 
-            }
+            },
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ figi }) => ({ type: 'Etfs', id: figi })),
+                        { type: 'Etfs', id: 'LIST' },
+                    ]
+                    : [{ type: 'Etfs', id: 'LIST' }],
         }),
-        providesTags: (result) =>
-            result
-                ? [
-                    ...result.map(({ figi }) => ({ type: 'Etfs', id: figi })),
-                    { type: 'Etfs', id: 'LIST' },
-                ]
-                : [{ type: 'Etfs', id: 'LIST' }],
+
+        getCurrencies: build.query({
+            queryFn: async (args, _queryapi, _extraoptions, _fetchwithbq)=>{
+
+                const currencyPromises = args.currencies.map((currency)=>{
+                    return _fetchwithbq({
+                        url: 'tinkoff.public.invest.api.contract.v1.InstrumentsService/CurrencyBy',
+                        body: {idType: '1', id: currency.figi},
+                        method: 'POST'
+                    }, _queryapi, _extraoptions).then((currency)=>currency.data.instrument)
+                })
+
+                const currnecy = await Promise.all(currencyPromises)
+
+                return {data: currnecy}
+            },
+
+            // providesTags: (result) =>
+            //     result
+            //         ? [
+            //             ...result.map(({ currnecy }) => ({ type: 'currnecy', id: currnecy.figi })),
+            //             { type: 'Currency', id: 'LIST' },
+            //         ]
+            //         : [{ type: 'Currency', id: 'LIST' }],
+        }),
     })
 })
 
@@ -362,5 +387,6 @@ export const {
     useGetBondCouponsQuery,
     useGetSharesQuery,
     useGetDividendsQuery,
-    useGetEtfsQuery
+    useGetEtfsQuery,
+    useGetCurrenciesQuery,
 } = clientApi

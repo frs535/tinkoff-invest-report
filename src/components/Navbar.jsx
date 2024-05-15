@@ -6,6 +6,7 @@ import AccountCircle from '@mui/icons-material/AccountCircle';
 import {useDispatch} from "react-redux";
 import {useNavigate} from "react-router-dom";
 import {setLogout} from "../state";
+import {clientApi} from "../state/api";
 const Navbar = ({isSidebarOpen, setIsSidebarOpen}) => {
 
     const dispatch = useDispatch();
@@ -38,6 +39,7 @@ const Navbar = ({isSidebarOpen, setIsSidebarOpen}) => {
                 {/* RIGHT SIDE */}
                 <Box gap="1.5rem">
                     <IconButton onClick={()=>{
+                        dispatch(clientApi.util.resetApiState());
                         dispatch(setLogout());
                         navigate("/dashboard");
                     }}>
