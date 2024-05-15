@@ -136,6 +136,7 @@ export const clientApi = createApi({
                             varMargin: ToFloat(bond.varMargin),
                             expectedYieldFifo: ToFloat(bond.expectedYieldFifo),
                             image: `https://invest-brands.cdn-tinkoff.ru/${info?.brand.logoName.replace('.png', 'x160.png')}`,
+                            currency: info.currency,
                         }
                     })};
             },
@@ -170,11 +171,14 @@ export const clientApi = createApi({
                         .then((row)=> row.data.events.map((row)=>{
 
                             const couponDate = new Date(row.couponDate)
+                            const month = couponDate.getMonth() + 1
+                            const year = couponDate.getFullYear()
                             return {
                                 figi: row.figi,
                                 couponDate: row.couponDate,
-                                month: couponDate.getMonth() + 1,
-                                year: couponDate.getFullYear(),
+                                month: month,
+                                year: year,
+                                period: `${month}/${year}`,
                                 couponNumber: row.couponNumber,
                                 couponPeriod: row.couponPeriod,
                                 payOneBond: ToFloat(row.payOneBond),
@@ -238,7 +242,8 @@ export const clientApi = createApi({
                             quantityLots: ToFloat(share.quantityLots),
                             blockedLots: ToFloat(share.blockedLots),
                             varMargin: ToFloat(share.varMargin),
-                            expectedYieldFifo: ToFloat(share.expectedYieldFifo)
+                            expectedYieldFifo: ToFloat(share.expectedYieldFifo),
+                            currency: info.currency,
                         }
                     })
                 }
@@ -257,7 +262,7 @@ export const clientApi = createApi({
 
                 if (args.positions.length ===0) return {data: []}
 
-                const startDate = BeginOfMonth(new Date());
+                const startDate = new Date()//BeginOfMonth(new Date());
                 const endDate = AddMonth(startDate, 12)
 
                 const dividends = []

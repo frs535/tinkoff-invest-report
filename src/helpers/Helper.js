@@ -18,6 +18,10 @@ export function ToFloat(item, currency){
     return result;
 }
 
+export function ToNumber(num) {
+    return (Math.round(num * 100) / 100).toFixed(2);
+}
+
 export function ToMoneyFormat(value, currency){
     if (!value) return 0
 

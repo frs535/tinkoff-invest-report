@@ -4,8 +4,8 @@ import {
 } from "../../state/api";
 import {
     Avatar,
-    Box,
-    Checkbox,
+    Box, Button,
+    Checkbox, IconButton,
     Table,
     TableBody,
     TableCell,
@@ -15,10 +15,22 @@ import {
     TextField,
     Typography
 } from "@mui/material";
+import RefreshIcon from '@mui/icons-material/Refresh';
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {AddMonth, BeginOfMonth, DiffDate, EndOfMonth, ToFloat, ToMoneyFormat, ToPercent} from "../../helpers/Helper";
+import {
+    AddMonth,
+    BeginOfMonth,
+    DiffDate,
+    EndOfMonth,
+    ToFloat,
+    ToMoneyFormat,
+    ToNumber,
+    ToPercent
+} from "../../helpers/Helper";
 import {DataGrid} from "@mui/x-data-grid";
+import {Menu as MenuIcon} from "@mui/icons-material";
+import { BarChart } from '@mui/x-charts/BarChart';
 
 function GetInvestPercent(figi, coupons, cost){
 
@@ -61,7 +73,7 @@ export const Bonds = ({bonds}) => {
 
     const [numberOfMonths, setNumberOfMonths] = useState(12);
 
-    const { data: bondsInfo=[], error, isLoading, isFetching, isError } = useGetBondsQuery({bonds: bonds})
+    const { data: bondsInfo=[], error, isLoading, isFetching, refetch, isError } = useGetBondsQuery({bonds: bonds})
 
     const { data: coupons=[], error: errorCoupons, isLoading: isLoadingCoupons} = useGetBondCouponsQuery({bonds: bondsInfo, numberOfMonths},
         {
@@ -76,9 +88,7 @@ export const Bonds = ({bonds}) => {
     if (isError)
         return (
             <Box>
-                <div>{error?.data?.status}</div>
-                <div>{error?.data?.error}</div>
-                <div>{error}</div>
+                <div>{error.message}</div>
             </Box>
         )
 
@@ -91,7 +101,7 @@ export const Bonds = ({bonds}) => {
             flex: 0.1,
             renderCell: (p) => {
                 return (
-                    <Avatar src={p.row.image}/>
+                    <Avatar sx={{ width: 30, height: 30 }} src={p.row.image}/>
                 )
             },
         },
@@ -100,7 +110,7 @@ export const Bonds = ({bonds}) => {
             headerName: "ISIN",
             headerAlign: "left",
             align: "left",
-            flex: 0.3,
+            flex: 0.4,
         },
         {
             field: "name",
@@ -108,6 +118,13 @@ export const Bonds = ({bonds}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.5,
+        },
+        {
+            field: "currency",
+            headerName: "Валюта",
+            headerAlign: "left",
+            align: "left",
+            flex: 0.1,
         },
         {
             field: "quantity",
@@ -124,7 +141,7 @@ export const Bonds = ({bonds}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.22,
-            renderCell: p => { return ToMoneyFormat(p.row.averagePositionPrice, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.averagePositionPrice) },
         },
         {
             field: "currentPrice",
@@ -133,7 +150,7 @@ export const Bonds = ({bonds}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.22,
-            renderCell: p => { return ToMoneyFormat(p.row.currentPrice, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.currentPrice) },
         },
         {
             field: "amount",
@@ -141,7 +158,7 @@ export const Bonds = ({bonds}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.3,
-            renderCell: p => { return ToMoneyFormat(p.row.amount, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.amount) },
         },
         {
             field: "expectedYieldFifo",
@@ -149,7 +166,7 @@ export const Bonds = ({bonds}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.3,
-            renderCell: p => { return ToMoneyFormat(p.row.expectedYieldFifo, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.expectedYieldFifo) },
         },
         {
             field: "currentNkd",
@@ -157,10 +174,12 @@ export const Bonds = ({bonds}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.3,
-            renderCell: p => { return ToMoneyFormat(p.row.expectedYieldFifo, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.expectedYieldFifo) },
         },
     ]
 
+    const dataTotal = []
+    const dataTotalStacked = []
     const currentDate = new Date()
     for (let i = 0; i < numberOfMonths; i++) {
 
@@ -172,7 +191,7 @@ export const Bonds = ({bonds}) => {
             headerName: `${date.getMonth() + 1}/${date.getFullYear()}`,
             headerAlign: "left",
             align: "left",
-            flex: 0.18,
+            flex: 0.22,
             renderCell: p =>
             {
 
@@ -184,7 +203,7 @@ export const Bonds = ({bonds}) => {
                     coupon.figi === p.id && coupon.year == year && coupon.month == month)
                 if (result){
                     const amount = p.row.quantity * result.payOneBond
-                    return ToMoneyFormat(amount, p.row.currency)
+                    return Math.round(amount * 100) / 100//ToMoneyFormat(amount, p.row.currency)
                 }
 
                 return ""
@@ -196,43 +215,80 @@ export const Bonds = ({bonds}) => {
             //     return value * 100;
             // },
         })
+
+        const month = date.getMonth() + 1
+        const year =  date.getFullYear()
+
+        const montlyCoupons = coupons.filter((coupon)=> coupon.year == year && coupon.month == month)
+        const monthTotal = montlyCoupons.
+            reduce((acc, curr)=>{
+                const result = bondsInfo.find((bond)=> bond.figi == curr.figi)
+
+            return result? acc + curr.payOneBond * result.quantity: acc + curr.payOneBond
+        }, 0)
+
+        dataTotal.push({
+            'month': `${month}/${year}`,
+            'amount': Math.round(monthTotal * 100) / 100,
+            'data': montlyCoupons.map((coupon)=> {
+                return{
+                    'amount': coupon.payOneBond,
+                    'figi': coupon.figi
+                }
+            }),
+        })
     }
 
-    // const couponsByPeriod = []
-    // for (let i = 0; i < numberOfMonths; i++) {
-    //
-    //     const date = new Date(currentDate)
-    //     date.setMonth(date.getMonth() + i)
-    //
-    //     couponsByPeriod.push({
-    //         [`field${date.getMonth() + 1}${date.getFullYear()}`]: coupons[i]
-    //     })
-    // }
+    bondsInfo.forEach((bond)=> {
 
-    const bondData = bonds.map((bond)=> {
+        const data=[]
+        for (let i = 0; i < numberOfMonths; i++) {
 
-        return{
-            figi: bond.figi,
-            image: bond.image,
-            isin: bond.isin,
-            name: bond.name,
-            quantity: bond.quantity,
-            averagePositionPrice: bond.averagePositionPrice,
-            amount: bond.amount,
-            currentPrice: bond.currentPrice,
-            expectedYieldFifo: bond.expectedYieldFifo,
-            currentNkd: bond.currentNkd,
+            const date = new Date(currentDate)
+            date.setMonth(date.getMonth() + i)
+            const month = date.getMonth() + 1
+            const year =  date.getFullYear()
+
+            const value = coupons.find((coupon)=> coupon.figi == bond.figi && coupon.year == year && coupon.month == month)
+            data.push(value?value.payOneBond: 0)
         }
+
+        dataTotalStacked.push({
+            stack: 'total', //Math.round(monthTotal * 100) / 100,
+            data: data,
+            label: bond.figi
+        })
     })
 
-    var counter = 0;
+    const columnsTotal =[
+        {
+            field: "month",
+            headerName: "Месяц",
+            sortable: true,
+            flex: 1,
+        },
+        {
+            field: "amount",
+            headerName: "Сумма",
+            sortable: true,
+            flex: 1,
+        },
+    ]
+
     return (
         <Box>
-            <Box sx={{ mx: 'auto', width: 200 }} >
-                <Typography sx={{ml:2, mt:2}} variant="h4">Облигации</Typography>
+            <Box sx={{
+                mx: 'auto',
+                width: 200,
+                display: "flex",
+            }} >
+                <Typography sx={{ml:2, mt:1}} variant="h4" >Облигации</Typography>
+                <IconButton onClick={()=>{ refetch()}}>
+                    <RefreshIcon/>
+                </IconButton>
             </Box>
-            <Box sx={{ lm: '20px' }}>
-                <TextField label="Месяцы для расчета"
+            <Box sx={{ ml:1, mb:1, lm: '20px' }}>
+                <TextField label="Месяцы"
                            type="number"
                            inputProps={{ type: 'number', shrink: true}}
                            size="small"
@@ -245,113 +301,37 @@ export const Bonds = ({bonds}) => {
                 columns={columns}
                 rows={bondsInfo}
                 getRowId={(row) => row.figi}
+                rowHeight={35}
             />
-            {/*<Table size="small">*/}
-            {/*    <TableHead>*/}
-            {/*        <TableRow>*/}
-            {/*            <TableCell></TableCell>*/}
-            {/*            <TableCell>Наименование</TableCell>*/}
-            {/*            <TableCell>ISIN</TableCell>*/}
-            {/*            <TableCell>Количество</TableCell>*/}
-            {/*            <TableCell>Цена </TableCell>*/}
-            {/*            <TableCell>Сумма</TableCell>*/}
-            {/*            <TableCell>Текущая цена</TableCell>*/}
-            {/*            <TableCell>Изменение</TableCell>*/}
-            {/*            <TableCell>НКД</TableCell>*/}
-            {/*            <TableCell>Инвест процент</TableCell>*/}
-            {/*            <TableCell align="right">Заблокирована</TableCell>*/}
-            {/*            {*/}
-            {/*                numberOfMonths > 0 ? new Array(numberOfMonths)*/}
-            {/*                        .fill(counter++,)*/}
-            {/*                        .map((number, index)=>{*/}
-            {/*                            const currentDate = new Date()*/}
-            {/*                            const date = new Date(currentDate)*/}
-            {/*                            date.setMonth(date.getMonth() + index)*/}
-            {/*                            return <TableCell>{`${date.getMonth() + 1}/${date.getFullYear()}`}</TableCell>*/}
-            {/*                        })*/}
-            {/*                : ""*/}
-            {/*            }*/}
-            {/*        </TableRow>*/}
-            {/*    </TableHead>*/}
-            {/*    <TableBody>*/}
-            {/*        {*/}
-            {/*            bondsInfo?.map((row)=>(*/}
-            {/*                <TableRow key={row.figi}>*/}
-            {/*                    <TableCell>*/}
-            {/*                        <Avatar src={`https://invest-brands.cdn-tinkoff.ru/${row.info.brand.logoName.replace('.png', 'x160.png')}`}/>*/}
-            {/*                    </TableCell>*/}
-            {/*                    <TableCell>{row.info.name}</TableCell>*/}
-            {/*                    <TableCell>{row.info.isin}</TableCell>*/}
-            {/*                    <TableCell>{row.quantity}</TableCell>*/}
-            {/*                    <TableCell>{ToMoneyFormat(row.averagePositionPrice, row.info.currency)}</TableCell>*/}
-            {/*                    <TableCell>{ToMoneyFormat(row.quantity * row.averagePositionPrice, row.info.currency)}</TableCell>*/}
-            {/*                    <TableCell>{ToMoneyFormat(row.currentPrice, row.info.currency)}</TableCell>*/}
-            {/*                    <TableCell>{ToMoneyFormat(row.expectedYieldFifo, row.info.currency)}</TableCell>*/}
-            {/*                    <TableCell>{ToMoneyFormat(row.currentNkd, row.info.currency)}</TableCell>*/}
-            {/*                    <TableCell>{GetInvestPercent(row.figi, coupons, row.averagePositionPrice)}</TableCell>*/}
-            {/*                    <TableCell>{<Checkbox disabled checked={row.bond.blocked} />}</TableCell>*/}
-            {/*                    {*/}
-            {/*                        numberOfMonths > 0 ? new Array(numberOfMonths)*/}
-            {/*                                .fill(0)*/}
-            {/*                                .map((number, index)=>{*/}
-
-            {/*                                    const currentDate = new Date()*/}
-            {/*                                    const date = new Date(currentDate)*/}
-            {/*                                    date.setMonth(date.getMonth()  + index)*/}
-            {/*                                    const month = date.getMonth() + 1*/}
-            {/*                                    const year = date.getFullYear()*/}
-
-            {/*                                    const result = coupons.find((coupon)=>*/}
-            {/*                                        coupon.figi == row.bond.figi && coupon.month==month && coupon.year ==year)*/}
-
-            {/*                                    if (result)*/}
-            {/*                                    {*/}
-            {/*                                        const amount = row.quantity * result.payOneBond*/}
-            {/*                                        return <TableCell>{ToMoneyFormat(amount, row.info.currency)}</TableCell>*/}
-            {/*                                    }*/}
-            {/*                                    return <TableCell></TableCell>*/}
-            {/*                                })*/}
-            {/*                            : ""*/}
-            {/*                    }*/}
-            {/*                </TableRow>*/}
-            {/*            ))}*/}
-            {/*    </TableBody>*/}
-            {/*    <TableFooter>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell></TableCell>*/}
-            {/*        <TableCell>Итого:</TableCell>*/}
-            {/*        {*/}
-            {/*            numberOfMonths > 0 ? new Array(numberOfMonths)*/}
-            {/*                    .fill(0)*/}
-            {/*                    .map((number, index)=>{*/}
-
-            {/*                        const currentDate = new Date()*/}
-            {/*                        const date = new Date(currentDate)*/}
-            {/*                        date.setMonth(date.getMonth()  + index)*/}
-            {/*                        const month = date.getMonth() + 1*/}
-            {/*                        const year = date.getFullYear()*/}
-
-            {/*                        const result = coupons.filter((coupon)=> coupon.month==month && coupon.year ==year)*/}
-            {/*                        let amount = 0;*/}
-            {/*                        result.forEach((item)=>{*/}
-            {/*                            const bond = bondsInfo.find((bond)=> bond.bond.figi == item.figi)*/}
-            {/*                            amount = amount + bond.quantity * item.payOneBond;*/}
-            {/*                        })*/}
-
-            {/*                        return <TableCell>{ToMoneyFormat(amount)}</TableCell>*/}
-            {/*                    })*/}
-            {/*                : ""*/}
-            {/*        }*/}
-            {/*    </TableFooter>*/}
-            {/*</Table>*/}
+            <Box sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+            }}>
+                <DataGrid
+                    loading={isLoading}
+                    sx={{ minWidth:50, maxWidth: 250, maxHeight: 370 }}
+                    columns={columnsTotal}
+                    rows={dataTotal}
+                    getRowId={(row) => row.month}
+                    hideFooter={true}
+                    rowHeight={25}
+                />
+                <BarChart
+                    dataset={dataTotal}
+                    xAxis={[{ scaleType: 'band', dataKey: 'month' }]}
+                    series={[{ dataKey: 'amount', label: 'Дивиденд по месяцам' }]}
+                    width={700}
+                    height={350}
+                />
+                {/*<BarChart*/}
+                {/*    dataset={dataTotal}*/}
+                {/*    xAxis={[{ scaleType: 'band', dataKey: 'month' }]}*/}
+                {/*    series={dataTotalStacked}*/}
+                {/*    width={900}*/}
+                {/*    height={950}*/}
+                {/*/>*/}
+            </Box>
         </Box>
     )
 }

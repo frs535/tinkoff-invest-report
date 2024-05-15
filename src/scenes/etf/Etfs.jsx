@@ -100,7 +100,7 @@ export const Etfs = ({etfs})=>{
             </Box>
             <DataGrid
                 loading={isLoading}
-                sx={{ height: 900, flexGrow: 1, minWidth:50, overflowY: 'auto' }}
+                sx={{ flexGrow: 1, minWidth:50, overflowY: 'auto' }}
                 columns={columns}
                 rows={data}
                 getRowId={(row) => row.figi}

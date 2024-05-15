@@ -21,15 +21,24 @@ export const Portfolio = ({accounts}) => {
     if(isLoading)
         return (<div>Загрузка</div>)
 
+    if (isError)
+        return (
+            <Box>
+                <div>{error.message}</div>
+            </Box>
+        )
+
     dispatch(setAccounts(allPortfolio))
 
     return (
         <Box>
-            <Accounts onChange={(id)=>{
-                dispatch(setAccount(id))
-                setCurrentAccountId(id)
-                setCurrentPortfolio(allPortfolio.find((portfolio)=> portfolio.accountId === id))
-            }}></Accounts>
+            <Box sx={{ ml: 3 }}>
+                <Accounts onChange={(id)=>{
+                    dispatch(setAccount(id))
+                    setCurrentAccountId(id)
+                    setCurrentPortfolio(allPortfolio.find((portfolio)=> portfolio.accountId === id))
+                }}/>
+            </Box>
 
             {/*<Typography sx={{ml:2}} variant="h5">{`Итого по счету: ${ToFloat(data.totalAmountPortfolio)}`}</Typography>*/}
 

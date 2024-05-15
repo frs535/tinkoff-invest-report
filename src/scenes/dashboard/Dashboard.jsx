@@ -11,12 +11,16 @@ import {setAccounts} from "../../state";
 
 export const Dashboard = () => {
 
-    // const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const [accountId, setAccountId] = useState()
+    const { data: accounts=[], error, isLoading, isError } = useGetAccountsQuery()
 
-    const { data: accounts=[], error, isLoading, isFetching, isError } = useGetAccountsQuery()
+    if (isError)
+        return (
+            <Box>
+                <div>{error.message}</div>
+            </Box>
+        )
 
     if (isLoading)
         return (<div>Загрузка</div>)

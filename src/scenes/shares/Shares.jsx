@@ -1,12 +1,24 @@
 import {useGetDividendsQuery, useGetPortfolioQuery, useGetSharesQuery} from "../../state/api";
-import {Avatar, Box, Checkbox, Table, TableBody, TableCell, TableHead, TableRow, Typography} from "@mui/material";
+import {
+    Avatar,
+    Box,
+    Checkbox,
+    IconButton,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    Typography
+} from "@mui/material";
 import * as React from "react";
-import {ToFloat, ToLocalDate, ToMoneyFormat, ToPercent} from "../../helpers/Helper";
+import {ToFloat, ToLocalDate, ToMoneyFormat, ToNumber, ToPercent} from "../../helpers/Helper";
 import {DataGrid} from "@mui/x-data-grid";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 export const Shares = ({shares}) => {
 
-    const { data=[], error, isLoading, isFetching, isError } = useGetSharesQuery({shares});
+    const { data=[], error, isLoading, isFetching, refetch, isError } = useGetSharesQuery({shares})
     const {data: dvivdents, isLoading: isLoadingDividents} = useGetDividendsQuery({positions:shares}, {
             skip: isLoading,
         });
@@ -17,8 +29,7 @@ export const Shares = ({shares}) => {
     if (isError)
         return (
             <Box>
-                <div>{error.data.status}</div>
-                <div>{error.data.error}</div>
+                <div>{error.message}</div>
             </Box>
         );
 
@@ -30,10 +41,10 @@ export const Shares = ({shares}) => {
         const shareDividends = dvivdents.filter((divident) => divident.figi === row.figi)
 
         const dividend = shareDividends.map((divs)=> {
-            return ToMoneyFormat(divs.dividendNet, row.info.currency)})
+            return ToNumber(divs.dividendNet)})
 
         const amountDividend = shareDividends.map((divs)=> {
-            return ToMoneyFormat(divs.dividendNet * row.quantity, row.info.currency)})
+            return ToNumber(divs.dividendNet * row.quantity, row.info.currency)})
 
         const closure = shareDividends.map((divs)=> {
             return ToLocalDate(new Date(divs.lastBuyDate))})
@@ -72,7 +83,7 @@ export const Shares = ({shares}) => {
             payment,
             profitability: profitability >0 ? ToPercent(profitability): "",
             blocked: row.share.blocked,
-            currency: row.info.currency,
+            currency: row.currency,
         }
     })
 
@@ -85,7 +96,7 @@ export const Shares = ({shares}) => {
             flex: 0.2,
             renderCell: (p) => {
                 return (
-                    <Avatar src={p.row.image}/>
+                    <Avatar sx={{ width: 30, height: 30 }} src={p.row.image}/>
                 )
             },
         },
@@ -104,6 +115,13 @@ export const Shares = ({shares}) => {
             flex: 0.4,
         },
         {
+            field: "currency",
+            headerName: "Валюта",
+            headerAlign: "left",
+            align: "left",
+            flex: 0.1,
+        },
+        {
             field: "quantity",
             headerName: "Кол.",
             description: 'Количество в портфеле',
@@ -118,7 +136,7 @@ export const Shares = ({shares}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.2,
-            renderCell: p => { return ToMoneyFormat(p.row.averagePositionPrice, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.averagePositionPrice) },
         },
         {
             field: "amount",
@@ -126,7 +144,7 @@ export const Shares = ({shares}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.2,
-            renderCell: p => { return ToMoneyFormat(p.row.amount, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.amount) },
         },
         {
             field: "currentPrice",
@@ -135,7 +153,7 @@ export const Shares = ({shares}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.2,
-            renderCell: p => { return ToMoneyFormat(p.row.currentPrice, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.currentPrice) },
         },
         {
             field: "expectedYieldFifo",
@@ -143,7 +161,7 @@ export const Shares = ({shares}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.3,
-            renderCell: p => { return ToMoneyFormat(p.row.expectedYieldFifo, p.row.currency) },
+            renderCell: p => { return ToNumber(p.row.expectedYieldFifo) },
         },
         {
             field: "dividend",
@@ -224,8 +242,15 @@ export const Shares = ({shares}) => {
 
     return (
         <Box>
-            <Box sx={{ mx: 'auto', width: 200 }} >
-                <Typography sx={{ml:2, mt:2}} variant="h4">Акции</Typography>
+            <Box sx={{
+                mx: 'auto',
+                width: 400,
+                display: "flex",
+            }} >
+                <Typography sx={{ml:2, mt:1}} variant="h4" >Акции</Typography>
+                <IconButton onClick={()=>{ refetch()}}>
+                    <RefreshIcon/>
+                </IconButton>
             </Box>
             <DataGrid
                 loading={isLoading}
@@ -233,6 +258,7 @@ export const Shares = ({shares}) => {
                 columns={columns}
                 rows={resultShare}
                 getRowId={(row) => row.figi}
+                rowHeight={35}
             />
         </Box>
     )

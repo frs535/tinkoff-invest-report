@@ -15,15 +15,21 @@ import {
     ChevronLeft,
     ChevronRightOutlined,
     HomeOutlined,
+    WorkOutlineOutlined,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
     {
-        text: "Таблица",
+        text: "Сводно",
         nav: "dashboard",
         icon: <HomeOutlined />,
+    },
+    {
+        text: "По портфелю",
+        nav: "dashboard",
+        icon: <WorkOutlineOutlined />,
     },
 ];
 
@@ -66,7 +72,7 @@ const Sidebar = ({
                             <Box color="secondary">
                                 <Box display="flex" alignItems="center" gap="0.5rem">
                                     <Typography variant="h4" fontWeight="bold">
-                                        ПОРТАЛ
+                                        Меню
                                     </Typography>
                                 </Box>
                                 {!isNonMobile && (
