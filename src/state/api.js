@@ -458,7 +458,6 @@ export const clientApi = createApi({
 
 export const {
     useGetAccountsQuery,
-    //useGetPortfolioQuery,
     useGetBondQuery,
     useGetBondsQuery,
     useGetAllPortfolioQuery,

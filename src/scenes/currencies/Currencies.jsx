@@ -1,13 +1,13 @@
 import {useGetCurrenciesQuery} from "../../state/api";
 import {Avatar, Box, Checkbox, IconButton, Typography} from "@mui/material";
 import * as React from "react";
-import {ToFloat, ToNumber} from "../../helpers/Helper";
+import {ToNumber} from "../../helpers/Helper";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {DataGrid} from "@mui/x-data-grid";
 
 export const Currencies = ({currencies}) => {
 
-    const { data: dataInfo=[], error, isLoading, isFetching, refetch, isError } = useGetCurrenciesQuery({currencies})
+    const { data: dataInfo=[], error, isLoading, refetch, isError } = useGetCurrenciesQuery({currencies})
 
     if (isLoading)
         return (<div>Загрузка</div>);
@@ -74,7 +74,6 @@ export const Currencies = ({currencies}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.2,
-            //renderCell: p => { return ToNumber(p.row.price) },
         },
         {
             field: "amount",
@@ -82,7 +81,6 @@ export const Currencies = ({currencies}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.2,
-            //renderCell: p => { return ToNumber(p.row.amount) },
         },
         {
             field: "currentPrice",
@@ -91,7 +89,6 @@ export const Currencies = ({currencies}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.2,
-            //renderCell: p => { return ToNumber(p.row.currentPrice) },
         },
         {
             field: "expectedYieldFifo",

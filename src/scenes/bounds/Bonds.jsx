@@ -12,14 +12,7 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import * as React from "react";
 import {useState} from "react";
-import {
-    AddMonth,
-    BeginOfMonth,
-    DiffDate,
-    EndOfMonth,
-    ToNumber,
-    ToPercent
-} from "../../helpers/Helper";
+import {ToNumber} from "../../helpers/Helper";
 import {DataGrid} from "@mui/x-data-grid";
 import { BarChart } from '@mui/x-charts/BarChart';
 
@@ -208,7 +201,7 @@ export const Bonds = ({bonds}) => {
         }
 
         dataTotalStacked.push({
-            stack: 'total', //Math.round(monthTotal * 100) / 100,
+            stack: 'total',
             data: data,
             label: bond.figi
         })
@@ -278,13 +271,6 @@ export const Bonds = ({bonds}) => {
                     width={700}
                     height={350}
                 />
-                {/*<BarChart*/}
-                {/*    dataset={dataTotal}*/}
-                {/*    xAxis={[{ scaleType: 'band', dataKey: 'month' }]}*/}
-                {/*    series={dataTotalStacked}*/}
-                {/*    width={900}*/}
-                {/*    height={950}*/}
-                {/*/>*/}
             </Box>
         </Box>
     )

@@ -1,12 +1,11 @@
 import {Box} from "@mui/material";
 import {useGetAccountsQuery, useGetAllPortfolioQuery} from "../../state/api";
 import * as React from "react";
-import {useDispatch} from "react-redux";
 import {Shares} from "../shares/Shares";
 import {Bonds} from "../bounds/Bonds";
 import {Etfs} from "../etf/Etfs";
 import {Currencies} from "../currencies/Currencies";
-import {ToAverage, ToFloat} from "../../helpers/Helper";
+import {ToAverage} from "../../helpers/Helper";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -33,9 +32,6 @@ function unionPosition(position1, position2) {
         expectedYieldFifo: ToAverage(position1.expectedYieldFifo,position2.expectedYieldFifo),
         currentNkd:  position1?.currentNkd ? position1.currentNkd :0,
     };
-
-    // if (position1.instrumentType == 'bond')
-    //     result['currentNkd'] = ToFloat(position1.currentNkd)
 
     return result
 }

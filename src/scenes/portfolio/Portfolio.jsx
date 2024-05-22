@@ -1,12 +1,12 @@
 import Accounts from "../../components/Accounts";
 import {useState} from "react";
 import {Box} from "@mui/material";
-import {useGetAccountsQuery, useGetAllPortfolioQuery, useGetPortfolioQuery} from "../../state/api";
+import {useGetAccountsQuery, useGetAllPortfolioQuery} from "../../state/api";
 import * as React from "react";
 import {Shares} from "../shares/Shares";
 import {Bonds} from "../bounds/Bonds";
 import {useDispatch} from "react-redux";
-import {setAccount, setAccounts} from "../../state";
+import {setAccount} from "../../state";
 import {Etfs} from "../etf/Etfs";
 import {Currencies} from "../currencies/Currencies";
 
@@ -16,10 +16,10 @@ export const Portfolio = () => {
     const [currentAccountId, setCurrentAccountId] = useState()
     const [currentPortfolio, setCurrentPortfolio] = useState()
 
-    const { data, error:errorAcc , isLoading: isLoadingAccounts, isError: isErrorAcc} = useGetAccountsQuery()
+    const { data= {accounts: []}, error:errorAcc , isLoading: isLoadingAccounts, isError: accIsError} = useGetAccountsQuery()
 
-    const { data: allPortfolio=[], error, isLoadingPortfolio = false, isFetching, isError } = useGetAllPortfolioQuery(data.accounts,{
-        skip: data == undefined || data.accounts.length == 0,
+    const { data: allPortfolio=[], error, isLoadingPortfolio, isError } = useGetAllPortfolioQuery(data.accounts,{
+        skip: data.accounts.length === 0,
     })
 
     if(isLoadingPortfolio || isLoadingAccounts)
@@ -29,6 +29,13 @@ export const Portfolio = () => {
         return (
             <Box>
                 <div>{error.message}</div>
+            </Box>
+        )
+
+    if (accIsError)
+        return (
+            <Box>
+                <div>{errorAcc.message}</div>
             </Box>
         )
 
@@ -43,10 +50,10 @@ export const Portfolio = () => {
                 }}/>
             </Box>
 
-            {currentAccountId? <Shares shares={currentPortfolio.positions.filter((postition)=> postition.instrumentType === 'share')}/> : ""}
-            {currentPortfolio? <Bonds bonds={currentPortfolio.positions.filter((postition)=> postition.instrumentType === 'bond')}/> : ""}
-            {currentAccountId? <Etfs etfs={currentPortfolio.positions.filter((postition)=> postition.instrumentType === 'etf')}/> : ""}
-            {currentPortfolio? <Currencies currencies={currentPortfolio.positions.filter((postition)=> postition.instrumentType === 'currency')}/> : ""}
+            {currentAccountId? <Shares shares={currentPortfolio?.positions.filter((postition)=> postition.instrumentType === 'share')}/> : ""}
+            {currentPortfolio? <Bonds bonds={currentPortfolio?.positions.filter((postition)=> postition.instrumentType === 'bond')}/> : ""}
+            {currentAccountId? <Etfs etfs={currentPortfolio?.positions.filter((postition)=> postition.instrumentType === 'etf')}/> : ""}
+            {currentPortfolio? <Currencies currencies={currentPortfolio?.positions.filter((postition)=> postition.instrumentType === 'currency')}/> : ""}
         </Box>
     )
 }
