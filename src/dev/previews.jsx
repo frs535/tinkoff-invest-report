@@ -2,6 +2,7 @@ import React from 'react'
 import {ComponentPreview, Previews} from '@react-buddy/ide-toolbox'
 import {PaletteTree} from './palette'
 import App from "../App";
+import {Currencies} from "../scenes/currencies/Currencies";
 
 const ComponentPreviews = () => {
     return (
@@ -14,6 +15,9 @@ const ComponentPreviews = () => {
             {/*</ComponentPreview>*/}
             <ComponentPreview path="/App">
                 <App/>
+            </ComponentPreview>
+            <ComponentPreview path="/Currencies">
+                <Currencies/>
             </ComponentPreview>
         </Previews>
     )

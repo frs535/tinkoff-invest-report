@@ -7,6 +7,7 @@ import {BrowserRouter, Navigate, Routes, Route, useLocation} from "react-router-
 import {SignIn} from "./scenes/auth/SignIn";
 import {Dashboard} from "./scenes/dashboard/Dashboard";
 import Layout from "./scenes/layout/Layout";
+import {Portfolio} from "./scenes/portfolio/Portfolio";
 
 const ScrollToTop = () => {
     const { pathname } = useLocation();
@@ -33,6 +34,7 @@ function App() {
                       <Route path="/" element={token=== null ? <SignIn /> : <Navigate to="/dashboard" replace/>} />
                       <Route element={<Layout/>}>
                           <Route path="/dashboard"  element={token != null? <Dashboard /> : <Navigate to="/" replace/>}/>
+                          <Route path="/portfolio"  element={token != null? <Portfolio /> : <Navigate to="/" replace/>}/>
                       </Route>
                   </Routes>
               </ThemeProvider>

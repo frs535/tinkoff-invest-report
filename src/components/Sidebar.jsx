@@ -28,7 +28,7 @@ const navItems = [
     },
     {
         text: "По портфелю",
-        nav: "dashboard",
+        nav: "portfolio",
         icon: <WorkOutlineOutlined />,
     },
 ];

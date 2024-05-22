@@ -7,6 +7,7 @@ import {useDispatch} from "react-redux";
 import {useNavigate} from "react-router-dom";
 import {setLogout} from "../state";
 import {clientApi} from "../state/api";
+
 const Navbar = ({isSidebarOpen, setIsSidebarOpen}) => {
 
     const dispatch = useDispatch();

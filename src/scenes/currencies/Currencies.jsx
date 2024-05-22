@@ -22,8 +22,6 @@ export const Currencies = ({currencies}) => {
     const data = currencies.map((currency) => {
 
         const info = dataInfo.find((p)=>p.figi === currency.figi);
-        const quantity = ToFloat(currency.quantity)
-        const price = ToFloat(currency.averagePositionPrice)
 
         return{
             currency,
@@ -31,11 +29,11 @@ export const Currencies = ({currencies}) => {
             figi: currency.figi,
             image: `https://invest-brands.cdn-tinkoff.ru/${info.brand.logoName.replace('.png', 'x160.png')}`,
             name: info.name,
-            quantity,
-            price,
-            amount: price * quantity,
-            currentPrice: ToFloat(currency.currentPrice),
-            expectedYieldFifo: ToFloat(currency.expectedYield),
+            quantity: currency.quantity,
+            price: currency.averagePositionPrice,
+            amount: currency.averagePositionPrice * currency.quantity,
+            currentPrice: currency.currentPrice,
+            expectedYieldFifo: currency.expectedYield,
             Currency: info.currency,
 
         }

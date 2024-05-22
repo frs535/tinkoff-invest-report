@@ -89,7 +89,7 @@ export const Etfs = ({etfs})=>{
             headerAlign: "left",
             align: "left",
             flex: 0.3,
-            renderCell: p => { return ToMoneyFormat(p.row.CurrentPrice, p.row.Currency) },
+            renderCell: p => { return ToMoneyFormat(p.row.Deviation, p.row.Currency) },
         },
     ]
 

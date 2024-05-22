@@ -5,7 +5,8 @@ export function ToFloat(item, currency){
     if (!item && currency)
         return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUR' }).format(0,)
 
-    if (!item && !currency) return 0;
+    if (!item && !currency)
+        return 0;
 
     const units = parseFloat(item.units?.replace(",", "."));
     const nano = item.nano? Math.round(item.nano/10000000) / 100 : 0;
@@ -88,4 +89,11 @@ export function DiffDate(startDate, endDate)
 {
     const diffTime = Math.abs(startDate - endDate);
     return  Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+export function ToAverage(param1, param2){
+    if(param1 == 0 && param2 == 0)
+        return 0
+
+    return (param1 + param2) / 2
 }

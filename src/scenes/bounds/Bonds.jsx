@@ -4,70 +4,24 @@ import {
 } from "../../state/api";
 import {
     Avatar,
-    Box, Button,
-    Checkbox, IconButton,
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableRow,
+    Box,
+    IconButton,
     TextField,
     Typography
 } from "@mui/material";
 import RefreshIcon from '@mui/icons-material/Refresh';
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {
     AddMonth,
     BeginOfMonth,
     DiffDate,
     EndOfMonth,
-    ToFloat,
-    ToMoneyFormat,
     ToNumber,
     ToPercent
 } from "../../helpers/Helper";
 import {DataGrid} from "@mui/x-data-grid";
-import {Menu as MenuIcon} from "@mui/icons-material";
 import { BarChart } from '@mui/x-charts/BarChart';
-
-function GetInvestPercent(figi, coupons, cost){
-
-    const current = coupons.filter((coupon)=> coupon.figi ===figi)
-    if (current.length===0) return 0
-
-    const startDate = BeginOfMonth(new Date())
-
-    const endDate = AddMonth(startDate, 12)
-
-    const annualDays    = DiffDate(startDate, endDate)
-
-    let maxDate = new Date();
-    current.forEach((row)=>{
-        const currentDate = new Date(row.couponDate)
-        if (currentDate > maxDate){
-            maxDate = currentDate
-        }
-        else{
-            console.log(maxDate)
-            console.log(currentDate)
-        }
-
-    })
-
-    maxDate = EndOfMonth(maxDate)
-
-    const nkdDays = DiffDate(startDate, maxDate)
-
-    const amount = current.reduce((result, value) => {
-        return result + value.payOneBond;
-    },0);
-
-    const result = annualDays * amount / nkdDays / cost
-
-    return ToPercent(result)
-}
 
 export const Bonds = ({bonds}) => {
 
@@ -174,7 +128,7 @@ export const Bonds = ({bonds}) => {
             headerAlign: "left",
             align: "left",
             flex: 0.3,
-            renderCell: p => { return ToNumber(p.row.expectedYieldFifo) },
+            renderCell: p => { return ToNumber(p.row.currentNkd) },
         },
     ]
 

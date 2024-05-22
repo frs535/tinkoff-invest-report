@@ -1,7 +1,58 @@
 import {createApi, fetchBaseQuery, retry} from "@reduxjs/toolkit/query/react";
-import {AddMonth, BeginOfMonth, EndOfMonth, ToFloat} from "../helpers/Helper";
-import {Build} from "@mui/icons-material";
+import {AddMonth, BeginOfMonth, ToFloat} from "../helpers/Helper";
 const baseUrl = `https://invest-public-api.tinkoff.ru/rest/`;
+
+function convertTotalAmount(totalAmount){
+    return{
+        currency: totalAmount.currency,
+        units: ToFloat(totalAmount.units),
+    }
+}
+
+function convertPosition(position){
+
+    const result =  {
+        figi: position.figi,
+        instrumentType: position.instrumentType,
+        positionUid : position.positionUid,
+        instrumentUid : position.instrumentUid,
+        blocked : position.blocked,
+        quantity: ToFloat(position.quantity),
+        averagePositionPrice : ToFloat(position.averagePositionPrice),
+        expectedYield: ToFloat(position.expectedYield),
+        averagePositionPricePt: ToFloat(position.averagePositionPricePt),
+        currentPrice: ToFloat(position.currentPrice),
+        averagePositionPriceFifo: ToFloat(position.averagePositionPriceFifo),
+        quantityLots: ToFloat(position.quantityLots),
+        blockedLots: ToFloat(position.blockedLots),
+        varMargin: ToFloat(position.varMargin),
+        expectedYieldFifo: ToFloat(position.expectedYieldFifo),
+        currentNkd: ToFloat(position?.currentNkd),
+    };
+
+    // if (position.instrumentType == 'bond')
+    //     result['currentNkd'] = ToFloat(position.currentNkd)
+
+    return result
+}
+
+function convertPortfolio(portfolio) {
+
+    return {
+        accountId: portfolio.accountId,
+        totalAmountShares: convertTotalAmount(portfolio.totalAmountShares),
+        totalAmountBonds: convertTotalAmount(portfolio.totalAmountBonds),
+        totalAmountEtf: convertTotalAmount(portfolio.totalAmountEtf),
+        totalAmountCurrencies: convertTotalAmount(portfolio.totalAmountCurrencies),
+        totalAmountFutures: convertTotalAmount(portfolio.totalAmountFutures),
+        totalAmountOptions: convertTotalAmount(portfolio.totalAmountOptions),
+        totalAmountSp: convertTotalAmount(portfolio.totalAmountSp),
+        totalAmountPortfolio: convertTotalAmount(portfolio.totalAmountPortfolio),
+        expectedYield: ToFloat(portfolio.expectedYieldFifo),
+        positions: portfolio.positions.map((position)=> convertPosition(position))
+    }
+
+}
 
 const baseQuery = retry(fetchBaseQuery({
     baseUrl: baseUrl,
@@ -59,7 +110,7 @@ export const clientApi = createApi({
                             "currency": `RUB`
                         })
                     }, _queryapi, _extraoptions)
-                        .then((result)=> result.data)
+                        .then((result)=> convertPortfolio(result.data))
                 });
 
                 const result = await Promise.all(allPortfolioPromise)
@@ -114,8 +165,6 @@ export const clientApi = createApi({
                     data: arg.bonds.map((bond)=>{
 
                         const info =infoBondResult.find((p)=> p.figi == bond.figi);
-                        const quantity = ToFloat(bond.quantity)
-                        const currentPrice = ToFloat(bond.currentPrice)
 
                         return {
                             bond,
@@ -123,18 +172,18 @@ export const clientApi = createApi({
                             figi: bond.figi,
                             isin: info.isin,
                             name: info.name,
-                            quantity,
-                            averagePositionPrice: ToFloat(bond.averagePositionPrice),
-                            expectedYield: ToFloat(bond.expectedYield),
-                            currentNkd: ToFloat(bond.currentNkd),
-                            averagePositionPricePt: ToFloat(bond.averagePositionPricePt),
-                            currentPrice,
-                            amount: currentPrice * quantity,
-                            averagePositionPriceFifo: ToFloat(bond.averagePositionPriceFifo),
-                            quantityLots: ToFloat(bond.quantityLots),
-                            blockedLots: ToFloat(bond.blockedLots),
-                            varMargin: ToFloat(bond.varMargin),
-                            expectedYieldFifo: ToFloat(bond.expectedYieldFifo),
+                            quantity: bond.quantity,
+                            averagePositionPrice: bond.averagePositionPrice,
+                            expectedYield: bond.expectedYield,
+                            currentNkd: bond.currentNkd,
+                            averagePositionPricePt: bond.averagePositionPricePt,
+                            currentPrice: bond.currentPrice,
+                            amount: bond.currentPrice * bond.quantity,
+                            averagePositionPriceFifo: bond.averagePositionPriceFifo,
+                            quantityLots: bond.quantityLots,
+                            blockedLots: bond.blockedLots,
+                            varMargin: bond.varMargin,
+                            expectedYieldFifo: bond.expectedYieldFifo,
                             image: `https://invest-brands.cdn-tinkoff.ru/${info?.brand.logoName.replace('.png', 'x160.png')}`,
                             currency: info.currency,
                         }
@@ -222,8 +271,7 @@ export const clientApi = createApi({
                     data: args.shares.map((share)=>{
 
                         const info =shares.find((row)=> row.figi === share.figi)
-                        const quantity = ToFloat(share.quantity)
-                        const averagePositionPrice = ToFloat(share.averagePositionPrice)
+
                         return {
                             share,
                             info: info,
@@ -231,18 +279,18 @@ export const clientApi = createApi({
                             image: `https://invest-brands.cdn-tinkoff.ru/${info?.brand.logoName.replace('.png', 'x160.png')}`,
                             name: info.name,
                             isin: info.isin,
-                            quantity: quantity,
-                            averagePositionPrice: averagePositionPrice,
-                            amount: quantity * averagePositionPrice,
-                            expectedYield: ToFloat(share.expectedYield),
-                            currentNkd: ToFloat(share.currentNkd),
-                            averagePositionPricePt: ToFloat(share.averagePositionPricePt),
-                            currentPrice: ToFloat(share.currentPrice),
-                            averagePositionPriceFifo: ToFloat(share.averagePositionPriceFifo),
-                            quantityLots: ToFloat(share.quantityLots),
-                            blockedLots: ToFloat(share.blockedLots),
-                            varMargin: ToFloat(share.varMargin),
-                            expectedYieldFifo: ToFloat(share.expectedYieldFifo),
+                            quantity: share.quantity,
+                            averagePositionPrice: share.averagePositionPrice,
+                            amount: share.quantity * share.averagePositionPrice,
+                            expectedYield: share.expectedYield,
+                            currentNkd: share.currentNkd,
+                            averagePositionPricePt: share.averagePositionPricePt,
+                            currentPrice: share.currentPrice,
+                            averagePositionPriceFifo: share.averagePositionPriceFifo,
+                            quantityLots: share.quantityLots,
+                            blockedLots: share.blockedLots,
+                            varMargin: share.varMargin,
+                            expectedYieldFifo: share.expectedYieldFifo,
                             currency: info.currency,
                         }
                     })
@@ -322,8 +370,6 @@ export const clientApi = createApi({
                     data: args.etfs.map((etf)=>{
 
                         const info = infoEtfs.find((p)=> p.figi == etf.figi)
-                        const quantity = ToFloat(etf.quantity)
-                        const price = ToFloat(etf.averagePositionPrice)
 
                         return {
                             bond: etf,
@@ -332,11 +378,11 @@ export const clientApi = createApi({
                             image: `https://invest-brands.cdn-tinkoff.ru/${info.brand.logoName.replace('.png', 'x160.png')}`,
                             Name: info.name,
                             ISIN: info.isin,
-                            Quantity: quantity,
-                            Price: price,
-                            Amount: price * quantity,
-                            CurrentPrice: ToFloat(etf.currentPrice),
-                            Deviation: ToFloat(etf.expectedYield),
+                            Quantity: etf.quantity,
+                            Price: etf.averagePositionPrice,
+                            Amount: etf.averagePositionPrice * etf.quantity,
+                            CurrentPrice: etf.currentPrice,
+                            Deviation: etf.expectedYield,
                             Currency: info.currency,
                         }
                     })};
@@ -359,7 +405,39 @@ export const clientApi = createApi({
                         url: 'tinkoff.public.invest.api.contract.v1.InstrumentsService/CurrencyBy',
                         body: {idType: '1', id: currency.figi},
                         method: 'POST'
-                    }, _queryapi, _extraoptions).then((currency)=>currency.data.instrument)
+                    }, _queryapi, _extraoptions).then((currency)=>{
+                        return {
+                            figi: currency.data.instrument.figi,
+                            ticker: currency.data.instrument.ticker,
+                            classCode: currency.data.instrument.classCode,
+                            isin: currency.data.instrument.isin,
+                            lot: currency.data.instrument.lot,
+                            currency: currency.data.instrument.currency,
+                            shortEnabledFlag: currency.data.instrument.shortEnabledFlag,
+                            name: currency.data.instrument.name,
+                            exchange: currency.data.instrument.exchange,
+                            nominal: currency.data.instrument.nominal,
+                            countryOfRisk: currency.data.instrument.countryOfRisk,
+                            countryOfRiskName: currency.data.instrument.countryOfRiskName,
+                            tradingStatus: currency.data.instrument.tradingStatus,
+                            otcFlag: currency.data.instrument.otcFlag,
+                            buyAvailableFlag: currency.data.instrument.buyAvailableFlag,
+                            sellAvailableFlag: currency.data.instrument.sellAvailableFlag,
+                            isoCurrencyName: currency.data.instrument.isoCurrencyName,
+                            minPriceIncrement: ToFloat(currency.data.instrument.minPriceIncrement),
+                            apiTradeAvailableFlag: currency.data.instrument.apiTradeAvailableFlag,
+                            uid: currency.data.instrument.uid,
+                            realExchange: currency.data.instrument.realExchange,
+                            positionUid: currency.data.instrument.positionUid,
+                            forIisFlag: currency.data.instrument.forIisFlag,
+                            forQualInvestorFlag: currency.data.instrument.forQualInvestorFlag,
+                            weekendFlag: currency.data.instrument.weekendFlag,
+                            blockedTcaFlag: currency.data.instrument.blockedTcaFlag,
+                            first1minCandleDate: new Date(currency.data.instrument.first1minCandleDate),
+                            first1dayCandleDate: new Date(currency.data.instrument.first1dayCandleDate),
+                            brand: currency.data.instrument.brand,
+                        }
+                    })
                 })
 
                 const currnecy = await Promise.all(currencyPromises)
@@ -380,7 +458,7 @@ export const clientApi = createApi({
 
 export const {
     useGetAccountsQuery,
-    useGetPortfolioQuery,
+    //useGetPortfolioQuery,
     useGetBondQuery,
     useGetBondsQuery,
     useGetAllPortfolioQuery,
