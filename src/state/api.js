@@ -1,5 +1,6 @@
 import {createApi, fetchBaseQuery, retry} from "@reduxjs/toolkit/query/react";
 import {AddMonth, BeginOfMonth, ToFloat} from "../helpers/Helper";
+
 const baseUrl = `https://invest-public-api.tinkoff.ru/rest/`;
 
 function convertTotalAmount(totalAmount){
@@ -11,7 +12,7 @@ function convertTotalAmount(totalAmount){
 
 function convertPosition(position){
 
-    const result =  {
+   return   {
         figi: position.figi,
         instrumentType: position.instrumentType,
         positionUid : position.positionUid,
@@ -29,11 +30,6 @@ function convertPosition(position){
         expectedYieldFifo: ToFloat(position.expectedYieldFifo),
         currentNkd: ToFloat(position?.currentNkd),
     };
-
-    // if (position.instrumentType == 'bond')
-    //     result['currentNkd'] = ToFloat(position.currentNkd)
-
-    return result
 }
 
 function convertPortfolio(portfolio) {
@@ -132,17 +128,16 @@ export const clientApi = createApi({
                 method: 'POST',
                 body: {idType: "1", id: figi }
             }),
-            providesTags: (result, error, arg) =>
+            providesTags: (result,) =>
                 result
                     ? [...result.map(({ figi }) => ({ type: 'Bond', figi })), 'Bond']
                     : ['Bond'],
             transformResponse: (response) => {
                 // приводим данные ответа к нужному формату
-                const posts = response.map((post) => ({
+                return response.map((post) => ({
                     ...post,
                     date: new Date(),
                 }));
-                return posts;
             }
         }),
 
@@ -164,7 +159,7 @@ export const clientApi = createApi({
                 return {
                     data: arg.bonds.map((bond)=>{
 
-                        const info =infoBondResult.find((p)=> p.figi == bond.figi);
+                        const info =infoBondResult.find((p)=> p.figi === bond.figi);
 
                         return {
                             bond,
@@ -369,7 +364,7 @@ export const clientApi = createApi({
                 return {
                     data: args.etfs.map((etf)=>{
 
-                        const info = infoEtfs.find((p)=> p.figi == etf.figi)
+                        const info = infoEtfs.find((p)=> p.figi === etf.figi)
 
                         return {
                             bond: etf,

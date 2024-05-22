@@ -20,9 +20,9 @@ export const Bonds = ({bonds}) => {
 
     const [numberOfMonths, setNumberOfMonths] = useState(12);
 
-    const { data: bondsInfo=[], error, isLoading, isFetching, refetch, isError } = useGetBondsQuery({bonds: bonds})
+    const { data: bondsInfo=[], error, isLoading, refetch, isError } = useGetBondsQuery({bonds: bonds})
 
-    const { data: coupons=[], error: errorCoupons, isLoading: isLoadingCoupons} = useGetBondCouponsQuery({bonds: bondsInfo, numberOfMonths},
+    const { data: coupons=[], error: errorCoupons, isLoading: isLoadingCoupons, isErrorCoupons} = useGetBondCouponsQuery({bonds: bondsInfo, numberOfMonths},
         {
             skip: bondsInfo.length ===0,
     })
@@ -36,6 +36,13 @@ export const Bonds = ({bonds}) => {
         return (
             <Box>
                 <div>{error.message}</div>
+            </Box>
+        )
+
+    if (isErrorCoupons)
+        return (
+            <Box>
+                <div>{errorCoupons.message}</div>
             </Box>
         )
 
@@ -147,7 +154,7 @@ export const Bonds = ({bonds}) => {
                 const year =  parseInt(currentString.slice(currentString.indexOf('_Y') + 2))
 
                 const result = coupons.find((coupon) =>
-                    coupon.figi === p.id && coupon.year == year && coupon.month == month)
+                    coupon.figi === p.id && coupon.year === year && coupon.month === month)
                 if (result){
                     const amount = p.row.quantity * result.payOneBond
                     return Math.round(amount * 100) / 100//ToMoneyFormat(amount, p.row.currency)
@@ -166,10 +173,10 @@ export const Bonds = ({bonds}) => {
         const month = date.getMonth() + 1
         const year =  date.getFullYear()
 
-        const montlyCoupons = coupons.filter((coupon)=> coupon.year == year && coupon.month == month)
+        const montlyCoupons = coupons.filter((coupon)=> coupon.year === year && coupon.month === month)
         const monthTotal = montlyCoupons.
             reduce((acc, curr)=>{
-                const result = bondsInfo.find((bond)=> bond.figi == curr.figi)
+                const result = bondsInfo.find((bond)=> bond.figi === curr.figi)
 
             return result? acc + curr.payOneBond * result.quantity: acc + curr.payOneBond
         }, 0)
@@ -196,7 +203,7 @@ export const Bonds = ({bonds}) => {
             const month = date.getMonth() + 1
             const year =  date.getFullYear()
 
-            const value = coupons.find((coupon)=> coupon.figi == bond.figi && coupon.year == year && coupon.month == month)
+            const value = coupons.find((coupon)=> coupon.figi === bond.figi && coupon.year === year && coupon.month === month)
             data.push(value?value.payOneBond: 0)
         }
 

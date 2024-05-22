@@ -1,6 +1,7 @@
 import {Box} from "@mui/material";
 import {useGetAccountsQuery, useGetAllPortfolioQuery} from "../../state/api";
 import * as React from "react";
+import {useState} from "react";
 import {Shares} from "../shares/Shares";
 import {Bonds} from "../bounds/Bonds";
 import {Etfs} from "../etf/Etfs";
@@ -10,39 +11,36 @@ import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
-import {useState} from "react";
 
 function unionPosition(position1, position2) {
 
-    const result = {
+    return {
         figi: position1.figi,
         instrumentType: position1.instrumentType,
-        positionUid : position1.positionUid,
-        instrumentUid : position1.instrumentUid,
-        blocked : position1.blocked,
+        positionUid: position1.positionUid,
+        instrumentUid: position1.instrumentUid,
+        blocked: position1.blocked,
         quantity: position1.quantity + position2.quantity,
-        averagePositionPrice :  ToAverage(position1.averagePositionPrice, position2.averagePositionPrice),
+        averagePositionPrice: ToAverage(position1.averagePositionPrice, position2.averagePositionPrice),
         expectedYield: ToAverage(position1.expectedYield, position2.expectedYield),
         averagePositionPricePt: ToAverage(position1.averagePositionPricePt, position2.averagePositionPricePt),
         currentPrice: position1.currentPrice,
-        averagePositionPriceFifo: ToAverage(position1.averagePositionPriceFifo,position2.averagePositionPriceFifo),
+        averagePositionPriceFifo: ToAverage(position1.averagePositionPriceFifo, position2.averagePositionPriceFifo),
         quantityLots: position1.quantityLots,
         blockedLots: position1.blockedLots,
         varMargin: position1.varMargin,
-        expectedYieldFifo: ToAverage(position1.expectedYieldFifo,position2.expectedYieldFifo),
-        currentNkd:  position1?.currentNkd ? position1.currentNkd :0,
-    };
-
-    return result
+        expectedYieldFifo: ToAverage(position1.expectedYieldFifo, position2.expectedYieldFifo),
+        currentNkd: position1?.currentNkd ? position1.currentNkd : 0,
+    }
 }
 
 function getPositions(accounts, instrumentType){
 
     const result = []
     accounts.forEach((account) => {
-        const positions = account.positions.filter((p)=>p.instrumentType == instrumentType);
+        const positions = account.positions.filter((p)=>p.instrumentType === instrumentType);
 
-        if (positions == undefined || positions == null) {
+        if (positions === undefined || positions == null) {
             console.log(positions)
         }
         positions.forEach((position)=>{
@@ -68,7 +66,7 @@ export const Dashboard = () => {
     const { data, error, isLoading, isError } = useGetAccountsQuery()
 
     const { data: portfolio=[], error: errorAcc, isLoading: isLoadingAcc = false, isError: isErrorAcc } = useGetAllPortfolioQuery(data?.accounts, {
-        skip: data == undefined,
+        skip: data === undefined,
     })
 
     if (isError || isErrorAcc)

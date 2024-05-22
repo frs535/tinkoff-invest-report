@@ -25,7 +25,7 @@ const navItems = [
         text: "Сводно",
         nav: "dashboard",
         icon: <HomeOutlined />,
-    },
+    },   
     {
         text: "По портфелю",
         nav: "portfolio",
