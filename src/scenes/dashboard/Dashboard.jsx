@@ -45,7 +45,7 @@ function getPositions(accounts, instrumentType){
         }
         positions.forEach((position)=>{
 
-            const foundPosition = result.find((p)=>p.figi == position.figi)
+            const foundPosition = result.find((p)=>p.figi === position.figi)
             if (foundPosition) {
 
                 const index = result.indexOf(foundPosition)
