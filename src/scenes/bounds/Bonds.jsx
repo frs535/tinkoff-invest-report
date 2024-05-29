@@ -236,7 +236,7 @@ export const Bonds = ({bonds}) => {
                 width: 200,
                 display: "flex",
             }} >
-                <Typography sx={{ml:2, mt:1}} variant="h4" >Облигации</Typography>
+                <Typography sx={{ml:2, mt:1}} component="h1" variant="h4" >Облигации</Typography>
                 <IconButton onClick={()=>{ refetch()}}>
                     <RefreshIcon/>
                 </IconButton>

@@ -2,9 +2,8 @@ import {Avatar, Box, Button, Container, TextField, Typography} from "@mui/materi
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import {useDispatch} from "react-redux";
 import {useNavigate} from "react-router-dom";
-import {setAccount, setLogin} from "../../state";
+import {setLogin} from "../../state";
 import {useState} from "react";
-import {useGetAccountsQuery} from "../../state/api";
 import * as React from "react";
 
 export const SignIn = () => {
